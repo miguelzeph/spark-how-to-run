@@ -1,0 +1,42 @@
+version: "3.9"
+services:
+
+  # Master - Controla o Cluster Spark, distribui tarefas para os WORKERS
+  spark-master:
+    image: bitnami/spark:latest
+    container_name: spark-master # Nome do container para identificação
+    environment:
+      # PERCEBA Q ESSA VARIAVEL É IMPORTANTE! ela que define se vai ser MASTER ou WORKERS
+      - SPARK_MODE=master # Define o modo do Spark como Master
+    ports:
+      - "8080:8080" # (UI do Master)
+      - "7077:7077" # (comunicação com workers)
+
+  # WORKERS - Os workers executam os JOBS, você pode ter vários Workers
+  # ou seja, precisa de pelo menos 1 (equivalente ao BROKERS do Kafka)
+  spark-worker:
+    image: bitnami/spark:latest
+    container_name: spark-worker
+    environment:
+        # PERCEBA Q ESSA VARIAVEL É IMPORTANTE! ela que define se vai ser MASTER ou WORKERS
+      - SPARK_MODE=worker # Define o modo do Spark como Worker
+      - SPARK_MASTER_URL=spark://spark-master:7077 # URL do Master para comunicação
+    depends_on:
+      - spark-master # Garante que o MASTER será iniciado antes do WORKER
+    ports:
+      - "8081:8081" # (UI do Worker)
+
+  # Serviço PySpark Client - ambiente Jupyter para interagir com o Spark
+  pyspark-client:
+    image: jupyter/pyspark-notebook:latest # Imagem com Jupyter e PySpark já configurados
+    container_name: pyspark-client # Nome do container para identificação
+    environment:
+      # Assim que conectamos com o PYSPARK
+      - SPARK_MASTER_URL=spark://spark-master:7077 # URL do Master para conexão
+    command: start-notebook.sh # Comando padrão para iniciar o Jupyter Notebook
+    volumes:
+      - ./notebooks:/home/jovyan/work # Monta um volume local para salvar notebooks
+    ports:
+      - "8888:8888" # Porta 8888 do container mapeada para 8888 no host (Jupyter Notebook)
+    depends_on:
+      - spark-master # Garante que o Master será iniciado antes do PySpark Client
