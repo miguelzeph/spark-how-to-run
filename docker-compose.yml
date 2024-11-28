@@ -1,42 +1,37 @@
-version: "3.9"
+version: '3.7'
 services:
-
-  # Master - Controla o Cluster Spark, distribui tarefas para os WORKERS
   spark-master:
     image: bitnami/spark:latest
-    container_name: spark-master # Nome do container para identificação
+    container_name: spark-master
     environment:
-      # PERCEBA Q ESSA VARIAVEL É IMPORTANTE! ela que define se vai ser MASTER ou WORKERS
-      - SPARK_MODE=master # Define o modo do Spark como Master
-    ports:
-      - "8080:8080" # (UI do Master)
-      - "7077:7077" # (comunicação com workers)
+      - SPARK_MODE=master
+    ports: # <porta-externa (host)>:<porta-interna (container)>
+      - "7077:7077" # Porta para o MASTER (aqui você conecta seu script python)
+      - "8080:8080" # Interface web do Spark Master (Aqui você monitora os dados)
 
-  # WORKERS - Os workers executam os JOBS, você pode ter vários Workers
-  # ou seja, precisa de pelo menos 1 (equivalente ao BROKERS do Kafka)
-  spark-worker:
+  spark-worker-1:
     image: bitnami/spark:latest
-    container_name: spark-worker
+    container_name: spark-worker-1
     environment:
-        # PERCEBA Q ESSA VARIAVEL É IMPORTANTE! ela que define se vai ser MASTER ou WORKERS
-      - SPARK_MODE=worker # Define o modo do Spark como Worker
-      - SPARK_MASTER_URL=spark://spark-master:7077 # URL do Master para comunicação
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
     depends_on:
-      - spark-master # Garante que o MASTER será iniciado antes do WORKER
+      - spark-master
     ports:
-      - "8081:8081" # (UI do Worker)
-
-  # Serviço PySpark Client - ambiente Jupyter para interagir com o Spark
-  pyspark-client:
-    image: jupyter/pyspark-notebook:latest # Imagem com Jupyter e PySpark já configurados
-    container_name: pyspark-client # Nome do container para identificação
+    # P.S. você pode remover a porta, caso você não precise saber qual worker está executando,
+    # pois o spark-master faz isso pra você, neste caso, eu criei dois workers para poder
+    # acessar separadamente a interface quando eu quiser pelo localhost.
+      - "8081:8081" # Interface web do Spark WORKER (se você for pelo localhost:8080 também chega aqui clicando nas APPLICATIONS )
+  spark-worker-2:
+    image: bitnami/spark:latest
+    container_name: spark-worker-2
     environment:
-      # Assim que conectamos com o PYSPARK
-      - SPARK_MASTER_URL=spark://spark-master:7077 # URL do Master para conexão
-    command: start-notebook.sh # Comando padrão para iniciar o Jupyter Notebook
-    volumes:
-      - ./notebooks:/home/jovyan/work # Monta um volume local para salvar notebooks
-    ports:
-      - "8888:8888" # Porta 8888 do container mapeada para 8888 no host (Jupyter Notebook)
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
     depends_on:
-      - spark-master # Garante que o Master será iniciado antes do PySpark Client
+      - spark-master
+    # P.S. você pode remover a porta, caso você não precise saber qual worker está executando,
+    # pois o spark-master faz isso pra você, neste caso, eu criei dois workers para poder
+    # acessar separadamente a interface quando eu quiser pelo localhost.
+    ports:
+      - "8082:8081" # Interface web do Spark WORKER (se você for pelo localhost:8080 também chega aqui clicando nas APPLICATIONS )
