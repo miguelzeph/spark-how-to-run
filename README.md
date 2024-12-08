@@ -10,6 +10,7 @@
 ---
 
 - **How it works**:
+
 Basically the **Python script** needs to use **Spark's API**, called **PySpark**, to connect to the **Spark Cluster**, where all data transformations will take place at **high speed**.
 
 In other words, to perform **data analysis** faster using **Spark**, we need to leverage **PySpark functions** or methods, which send messages to the **Spark WORKERS**. 
