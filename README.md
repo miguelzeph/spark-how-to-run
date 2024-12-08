@@ -1,4 +1,4 @@
-# Documentation for Using Apache Spark and PySpark
+# Minimal Apache Spark & PySpark Setup for Basic Functionality
 
 ## What is Apache Spark?
 **Apache Spark** is a distributed data processing engine designed for large-scale data processing. It provides high speed and efficiency in transforming and analyzing distributed data.
